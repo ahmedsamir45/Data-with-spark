@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Analyzer Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h1, h2, h3 {
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-form {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .upload-form form{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .upload-form input[type="file"] {
+            padding: 10px;
+            margin-right: 10px;
+            background-color: #eee;
+            border-radius: 20px;
+        }
+
+        .upload-form button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .upload-form button:hover {
+            background-color: #0056b3;
+        }
+
+        .error {
+            color: #dc3545;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #dc3545;
+            border-radius: 4px;
+            background-color: #f8d7da;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #dee2e6;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stats-box {
+            padding: 15px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .numeric-value {
+            font-family: 'Courier New', monospace;
+            color: #0056b3;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .columns-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .columns-list li {
+            background-color: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+        .column-type {
+        font-size: 0.8em;
+        color: #666;
+        display: block;
+        margin-top: 4px;
+    }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Data Analyzer Dashboard</h1>
+        
+        <div class="upload-form">
+            <form action="/upload" method="POST" enctype="multipart/form-data">
+                <label for="fileInput">Add CSV File</label>
+                <input type="file" id="fileInput" name="file" accept=".csv" required>
+                <button type="submit">Analyze Data</button>
+            </form>
+        </div>
+
+        {% if data %}
+            {% if data.error %}
+                <div class="error">
+                    <strong>Error:</strong> {{ data.error }}
+                </div>
+            {% else %}
+                <div class="section">
+                    <h2>Dataset Overview</h2>
+                    <h3>Columns ({{ data.columns|length }})</h3>
+                    <ul class="columns-list">
+                        {% for column in data.columns %}
+                            <li>
+                                {{ column }}
+                                <span class="column-type">{{ data.column_types[column] }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h2>Statistical Summary</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    {% for col in data.columns %}
+                                        <th>{{ col }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in data.description %}
+                                    <tr>
+                                        {% for value in row %}
+                                            <td class="numeric-value">{{ value }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Data Preview (Top 20 Rows)</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    {% for column in data.columns %}
+                                        <th>{{ column }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in data.top_20 %}
+                                    <tr>
+                                        {% for value in row.values() %}
+                                            <td>{{ value }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="stats-container">
+                    <div class="stats-box">
+                        <h3>Numeric Column Sums</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Column</th>
+                                    <th>Sum</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for column, sum_value in data.sum.items() %}
+                                    <tr>
+                                        <td>{{ column }}</td>
+                                        <td class="numeric-value">{{ sum_value }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="stats-box">
+                        <h3>Null Values Summary</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Column</th>
+                                    <th>Null Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for column, null_count in data.null_counts.items() %}
+                                    <tr>
+                                        <td>{{ column }}</td>
+                                        <td class="numeric-value">{{ null_count }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</body>
+</html>
